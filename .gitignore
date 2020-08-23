@@ -1,0 +1,10 @@
+.classpath
+.project
+.settings
+target
+*.iml
+.idea
+.idea/*.xml
+*.versionsBackup
+.DS_Store
+*/.DS_Store
