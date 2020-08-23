@@ -1,11 +1,6 @@
 /*
  * Copyright (c) 1994, 2013, Oracle and/or its affiliates. All rights reserved.
- * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
- *
- *
- *
- *
- *
+ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  *
  *
@@ -246,7 +241,7 @@ class Thread implements Runnable {
      */
     public final static int MIN_PRIORITY = 1;
 
-   /**
+    /**
      * The default priority that is assigned to a thread.
      */
     public final static int NORM_PRIORITY = 5;
@@ -323,14 +318,14 @@ class Thread implements Runnable {
      *          cleared when this exception is thrown.
      */
     public static void sleep(long millis, int nanos)
-    throws InterruptedException {
+            throws InterruptedException {
         if (millis < 0) {
             throw new IllegalArgumentException("timeout value is negative");
         }
 
         if (nanos < 0 || nanos > 999999) {
             throw new IllegalArgumentException(
-                                "nanosecond timeout value out of range");
+                    "nanosecond timeout value out of range");
         }
 
         if (nanos >= 500000 || (nanos != 0 && millis == 0)) {
@@ -365,8 +360,6 @@ class Thread implements Runnable {
         if (name == null) {
             throw new NullPointerException("name cannot be null");
         }
-
-        this.name = name.toCharArray();
 
         Thread parent = currentThread();
         SecurityManager security = System.getSecurityManager();
@@ -404,6 +397,7 @@ class Thread implements Runnable {
         this.group = g;
         this.daemon = parent.isDaemon();
         this.priority = parent.getPriority();
+        this.name = name.toCharArray();
         if (security == null || isCCLOverridden(parent.getClass()))
             this.contextClassLoader = parent.getContextClassLoader();
         else
@@ -414,7 +408,7 @@ class Thread implements Runnable {
         setPriority(priority);
         if (parent.inheritableThreadLocals != null)
             this.inheritableThreadLocals =
-                ThreadLocal.createInheritedMap(parent.inheritableThreadLocals);
+                    ThreadLocal.createInheritedMap(parent.inheritableThreadLocals);
         /* Stash the specified stack size in case the VM cares */
         this.stackSize = stackSize;
 
@@ -1232,7 +1226,7 @@ class Thread implements Runnable {
      *          cleared when this exception is thrown.
      */
     public final synchronized void join(long millis)
-    throws InterruptedException {
+            throws InterruptedException {
         long base = System.currentTimeMillis();
         long now = 0;
 
@@ -1282,7 +1276,7 @@ class Thread implements Runnable {
      *          cleared when this exception is thrown.
      */
     public final synchronized void join(long millis, int nanos)
-    throws InterruptedException {
+            throws InterruptedException {
 
         if (millis < 0) {
             throw new IllegalArgumentException("timeout value is negative");
@@ -1290,7 +1284,7 @@ class Thread implements Runnable {
 
         if (nanos < 0 || nanos > 999999) {
             throw new IllegalArgumentException(
-                                "nanosecond timeout value out of range");
+                    "nanosecond timeout value out of range");
         }
 
         if (nanos >= 500000 || (nanos != 0 && millis == 0)) {
@@ -1394,10 +1388,10 @@ class Thread implements Runnable {
         ThreadGroup group = getThreadGroup();
         if (group != null) {
             return "Thread[" + getName() + "," + getPriority() + "," +
-                           group.getName() + "]";
+                    group.getName() + "]";
         } else {
             return "Thread[" + getName() + "," + getPriority() + "," +
-                            "" + "]";
+                    "" + "]";
         }
     }
 
@@ -1434,7 +1428,7 @@ class Thread implements Runnable {
         SecurityManager sm = System.getSecurityManager();
         if (sm != null) {
             ClassLoader.checkClassLoaderPermission(contextClassLoader,
-                                                   Reflection.getCallerClass());
+                    Reflection.getCallerClass());
         }
         return contextClassLoader;
     }
@@ -1488,7 +1482,7 @@ class Thread implements Runnable {
     public static native boolean holdsLock(Object obj);
 
     private static final StackTraceElement[] EMPTY_STACK_TRACE
-        = new StackTraceElement[0];
+            = new StackTraceElement[0];
 
     /**
      * Returns an array of stack trace elements representing the stack dump
@@ -1532,7 +1526,7 @@ class Thread implements Runnable {
             SecurityManager security = System.getSecurityManager();
             if (security != null) {
                 security.checkPermission(
-                    SecurityConstants.GET_STACK_TRACE_PERMISSION);
+                        SecurityConstants.GET_STACK_TRACE_PERMISSION);
             }
             // optimization so we do not call into the vm for threads that
             // have not yet started or have terminated
@@ -1593,9 +1587,9 @@ class Thread implements Runnable {
         SecurityManager security = System.getSecurityManager();
         if (security != null) {
             security.checkPermission(
-                SecurityConstants.GET_STACK_TRACE_PERMISSION);
+                    SecurityConstants.GET_STACK_TRACE_PERMISSION);
             security.checkPermission(
-                SecurityConstants.MODIFY_THREADGROUP_PERMISSION);
+                    SecurityConstants.MODIFY_THREADGROUP_PERMISSION);
         }
 
         // Get a snapshot of the list of all threads
@@ -1614,7 +1608,7 @@ class Thread implements Runnable {
 
 
     private static final RuntimePermission SUBCLASS_IMPLEMENTATION_PERMISSION =
-                    new RuntimePermission("enableContextClassLoaderOverride");
+            new RuntimePermission("enableContextClassLoaderOverride");
 
     /** cache of subclass security audit results */
     /* Replace with ConcurrentReferenceHashMap when/if it appears in a future
@@ -1622,11 +1616,11 @@ class Thread implements Runnable {
     private static class Caches {
         /** cache of subclass security audit results */
         static final ConcurrentMap<WeakClassKey,Boolean> subclassAudits =
-            new ConcurrentHashMap<>();
+                new ConcurrentHashMap<>();
 
         /** queue for WeakReferences to audited subclasses */
         static final ReferenceQueue<Class<?>> subclassAuditsQueue =
-            new ReferenceQueue<>();
+                new ReferenceQueue<>();
     }
 
     /**
@@ -1657,27 +1651,27 @@ class Thread implements Runnable {
      */
     private static boolean auditSubclass(final Class<?> subcl) {
         Boolean result = AccessController.doPrivileged(
-            new PrivilegedAction<Boolean>() {
-                public Boolean run() {
-                    for (Class<?> cl = subcl;
-                         cl != Thread.class;
-                         cl = cl.getSuperclass())
-                    {
-                        try {
-                            cl.getDeclaredMethod("getContextClassLoader", new Class<?>[0]);
-                            return Boolean.TRUE;
-                        } catch (NoSuchMethodException ex) {
+                new PrivilegedAction<Boolean>() {
+                    public Boolean run() {
+                        for (Class<?> cl = subcl;
+                             cl != Thread.class;
+                             cl = cl.getSuperclass())
+                        {
+                            try {
+                                cl.getDeclaredMethod("getContextClassLoader", new Class<?>[0]);
+                                return Boolean.TRUE;
+                            } catch (NoSuchMethodException ex) {
+                            }
+                            try {
+                                Class<?>[] params = {ClassLoader.class};
+                                cl.getDeclaredMethod("setContextClassLoader", params);
+                                return Boolean.TRUE;
+                            } catch (NoSuchMethodException ex) {
+                            }
                         }
-                        try {
-                            Class<?>[] params = {ClassLoader.class};
-                            cl.getDeclaredMethod("setContextClassLoader", params);
-                            return Boolean.TRUE;
-                        } catch (NoSuchMethodException ex) {
-                        }
+                        return Boolean.FALSE;
                     }
-                    return Boolean.FALSE;
                 }
-            }
         );
         return result.booleanValue();
     }
@@ -1736,6 +1730,7 @@ class Thread implements Runnable {
         /**
          * Thread state for a thread which has not yet started.
          */
+        // new状态，意思没有执行过的线程。多半是新建的未执行的线程
         NEW,
 
         /**
@@ -1744,6 +1739,8 @@ class Thread implements Runnable {
          * be waiting for other resources from the operating system
          * such as processor.
          */
+        // RUNNABLE状态标识线程在java虚拟机中当前正在执行，但是对应的OS的线程中却可能是等待cpu等
+        // 因此可以得出结论： java的线程状态与 OS 的线程状态无一一对应关系。
         RUNNABLE,
 
         /**
@@ -1753,6 +1750,7 @@ class Thread implements Runnable {
          * reenter a synchronized block/method after calling
          * {@link Object#wait() Object.wait}.
          */
+        // java中的线程阻塞意思是等待锁资源； os中的锁资源竞争肯定会导致线程的切换
         BLOCKED,
 
         /**
@@ -1774,6 +1772,7 @@ class Thread implements Runnable {
          * that object. A thread that has called <tt>Thread.join()</tt>
          * is waiting for a specified thread to terminate.
          */
+        // 线程等待状态，通常都是因为线程同步方法的调用，要求线程执行等待。Object.wait, Thread.join, LockSupport.part都会导致线程等待。
         WAITING,
 
         /**
@@ -1788,12 +1787,15 @@ class Thread implements Runnable {
          *   <li>{@link LockSupport#parkUntil LockSupport.parkUntil}</li>
          * </ul>
          */
+        // timed_wating 优先时间等待。通常是线程被要求执行同步方法，但是同步等待的时间是超时的。即再等待的时候传递了一个超时时间。
+        // 通常就进入到这里了。
         TIMED_WAITING,
 
         /**
          * Thread state for a terminated thread.
          * The thread has completed execution.
          */
+        // 线程的最终状态
         TERMINATED;
     }
 
@@ -1891,12 +1893,12 @@ class Thread implements Runnable {
         SecurityManager sm = System.getSecurityManager();
         if (sm != null) {
             sm.checkPermission(
-                new RuntimePermission("setDefaultUncaughtExceptionHandler")
-                    );
+                    new RuntimePermission("setDefaultUncaughtExceptionHandler")
+            );
         }
 
-         defaultUncaughtExceptionHandler = eh;
-     }
+        defaultUncaughtExceptionHandler = eh;
+    }
 
     /**
      * Returns the default handler invoked when a thread abruptly terminates
@@ -1921,7 +1923,7 @@ class Thread implements Runnable {
      */
     public UncaughtExceptionHandler getUncaughtExceptionHandler() {
         return uncaughtExceptionHandler != null ?
-            uncaughtExceptionHandler : group;
+                uncaughtExceptionHandler : group;
     }
 
     /**
@@ -1958,7 +1960,7 @@ class Thread implements Runnable {
      */
     static void processQueue(ReferenceQueue<Class<?>> queue,
                              ConcurrentMap<? extends
-                             WeakReference<Class<?>>, ?> map)
+                                     WeakReference<Class<?>>, ?> map)
     {
         Reference<? extends Class<?>> ref;
         while((ref = queue.poll()) != null) {
@@ -2007,7 +2009,7 @@ class Thread implements Runnable {
             if (obj instanceof WeakClassKey) {
                 Object referent = get();
                 return (referent != null) &&
-                       (referent == ((WeakClassKey) obj).get());
+                        (referent == ((WeakClassKey) obj).get());
             } else {
                 return false;
             }
