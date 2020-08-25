@@ -4,7 +4,7 @@ import java.lang.reflect.Field;
 import java.util.HashMap;
 import java.util.Map;
 
-public class Main {
+public class HashMapTestMain {
 
     public static void reflectPrintOut(HashMap<Integer, String> objMap) throws IllegalAccessException {
         if (null == objMap) {
@@ -276,9 +276,9 @@ public class Main {
 
         defalutHashMap.put(1, "sdsd");
 
-        System.out.println("--------------------define initial capacity begin----------------------------");
+        System.out.println("--------------------defineCapacityAndLoadFactor begin----------------------------");
         reflectPrintOut(defalutHashMap);
-        System.out.println("--------------------define initial capacity end--------------------------");
+        System.out.println("--------------------defineCapacityAndLoadFactor end--------------------------");
 
         /**
          * 添加1个元素后，计算了threshold： capacity * loadFactor （4*0.6）=2
@@ -302,9 +302,9 @@ public class Main {
         defalutHashMap.put(4, "sdsd");
         defalutHashMap.put(5, "sdsd");
 
-        System.out.println("--------------------define initial capacity begin----------------------------");
+        System.out.println("--------------------defineCapacityAndLoadFactor begin----------------------------");
         reflectPrintOut(defalutHashMap);
-        System.out.println("--------------------define initial capacity end--------------------------");
+        System.out.println("--------------------defineCapacityAndLoadFactor end--------------------------");
 
         /**
          * 继续再添加2个元素，size大于等于threshold，开始扩容。capacity变成：原始capacity*2，阈值变成 loadFacotr * 新的capacity 8*0.6 =4
@@ -327,9 +327,9 @@ public class Main {
 
         defalutHashMap.put(14, "sdsd");
         defalutHashMap.put(15, "sdsd");
-        System.out.println("--------------------define initial capacity begin----------------------------");
+        System.out.println("--------------------defineCapacityAndLoadFactor begin----------------------------");
         reflectPrintOut(defalutHashMap);
-        System.out.println("--------------------define initial capacity end--------------------------");
+        System.out.println("--------------------defineCapacityAndLoadFactor end--------------------------");
 
         /**
          * 继续添加两个个元素，size大于threshold，开始扩容。capacity变成：原始capacity*2，阈值变成 capacity * loadFactor
@@ -349,6 +349,36 @@ public class Main {
          *
          * */
 
+
+        defalutHashMap.put(21, "sdsd");
+        defalutHashMap.put(22, "sdsd");
+        defalutHashMap.put(23, "sdsd");
+        defalutHashMap.put(24, "sdsd");
+        defalutHashMap.put(25, "sdsd");
+        defalutHashMap.put(26, "sdsd");
+
+        System.out.println("--------------------defineCapacityAndLoadFactor begin----------------------------");
+        reflectPrintOut(defalutHashMap);
+        System.out.println("--------------------defineCapacityAndLoadFactor end--------------------------");
+
+
+        /**
+         * 继续添元素，size大于threshold，开始扩容，且原始capacity大于默认的capacity 16，。capacity变成：原始capacity*2，阈值变成原始的阈值 *2
+         *
+         * DEFAULT_INITIAL_CAPACITY: 16
+         * MAXIMUM_CAPACITY: 1073741824
+         * DEFAULT_LOAD_FACTOR: 0.75
+         * TREEIFY_THRESHOLD: 8
+         * UNTREEIFY_THRESHOLD: 6
+         * MIN_TREEIFY_CAPACITY: 64
+         * table: 32 [Ljava.util.HashMap$Node;@330bedb4
+         * entrySet: null
+         * size: 11
+         * modCount: 11
+         * threshold: 18
+         * loadFactor: 0.6
+         * */
+
     }
 
     /**
@@ -357,11 +387,14 @@ public class Main {
      * 如果自定capacity，loadFactor使用默认值。计算threshold= 初始capacity最近的2的冥，然后赋值给capacity，这里需要注意：真正的元素不一定是指定的capacity大小。这个时候，先计算threshold的目的是赋值capacity，在push元素新建key数组的时候，会重建计算threshold=capacity*loadFactor;
      * 如果自定capacity和loadFactor。计算threshold= 初始capacity最近的2的冥，然后赋值给capacity，这里需要注意：真正的元素不一定是指定的capacity大小。这个时候，先计算threshold的目的是赋值capacity，在push元素新建key数组的时候，会重建计算threshold=capacity*loadFactor;
      * <p>
-     * 初始capacity和threshold的计算不依赖装载因子，后续threshold计算依赖装载因子。 threshold的主要功能是控制hashMap的key数组进行扩容。
+     * new HashMap的时候，capacity和threshold的计算不依赖装载因子，后续threshold计算依赖装载因子。 threshold的主要功能是控制hashMap的key数组进行扩容。
+     * <p>
+     * threshold在扩容时，如果老的capacity容量小于默认的capacity的时候，等于capacity*loadFator，否则threshold就是之前thresho的2倍。因此，这里是有两套逻辑变更threshold的值的
+     * 初始化newHashMap，如果在指定了capacity的情况下，计算threshold主要是为了计算2的n次冥并给capacity赋值，在resize的时候，会重建赋值threshold。
      */
 
     public static void main(String[] args) throws IllegalAccessException {
-
+        defineCapacityAndLoadFactor();
     }
 
 }

@@ -687,7 +687,7 @@ public class HashMap<K,V> extends AbstractMap<K,V>
     final Node<K,V>[] resize() {
         Node<K,V>[] oldTab = table;
         int oldCap = (oldTab == null) ? 0 : oldTab.length;
-        int oldThr = threshold; // 如果指定了capacity，这里就是计算出来的值
+        int oldThr = threshold; // 如果在初始化HashMap的时候指定了capacity，这里就是计算出来的值
         int newCap, newThr = 0;
         if (oldCap > 0) {
             if (oldCap >= MAXIMUM_CAPACITY) {
