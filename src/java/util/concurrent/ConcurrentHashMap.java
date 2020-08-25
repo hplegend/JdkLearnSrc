@@ -84,6 +84,8 @@ import java.util.stream.Stream;
  * interoperable with {@code Hashtable} in programs that rely on its
  * thread safety but not on its synchronization details.
  *
+ * HashTable的 检索操作（如 get）也是要加锁的，但是ConcurrentHashMap不加锁
+ *
  * <p>Retrieval operations (including {@code get}) generally do not
  * block, so may overlap with update operations (including {@code put}
  * and {@code remove}). Retrievals reflect the results of the most
@@ -104,6 +106,9 @@ import java.util.stream.Stream;
  * Otherwise the results of these methods reflect transient states
  * that may be adequate for monitoring or estimation purposes, but not
  * for program control.
+ *
+ * 集合框架的Iterator设计的初衷就是单线程访问，因此不能通过它进行修改操作，否则依旧会报错。
+ * Size ContainValue等记录的瞬态，因此在并发情况下，不能保证一致性？？一些除Iterator的迭代器，也记录的是瞬态，那么可以认为这里使用的是CopyOnWriter的事项？
  *
  * <p>The table is dynamically expanded when there are too many
  * collisions (i.e., keys that have distinct hash codes but fall into

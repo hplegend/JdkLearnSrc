@@ -319,7 +319,7 @@ public class HashMap<K,V> extends AbstractMap<K,V>
 
     /**
      * Computes key.hashCode() and spreads (XORs) higher bits of hash
-     * to lower.  Because the table uses power-of-two masking, sets of
+     * to lower.  Because the table uses power-of-two(二次幂) masking, sets of
      * hashes that vary only in bits above the current mask will
      * always collide. (Among known examples are sets of Float keys
      * holding consecutive whole numbers in small tables.)  So we
@@ -335,7 +335,7 @@ public class HashMap<K,V> extends AbstractMap<K,V>
      */
     static final int hash(Object key) {
         int h;
-        return (key == null) ? 0 : (h = key.hashCode()) ^ (h >>> 16);
+        return (key == null) ? 0 : (h = key.hashCode()) ^ (h >>> 16);  // 取高低位
     }
 
     /**
@@ -403,7 +403,7 @@ public class HashMap<K,V> extends AbstractMap<K,V>
     /**
      * The number of key-value mappings contained in this map.
      */
-    transient int size;
+    transient int size;  // 这里的size记录的是总数
 
     /**
      * The number of times this HashMap has been structurally modified
@@ -423,6 +423,9 @@ public class HashMap<K,V> extends AbstractMap<K,V>
     // Additionally, if the table array has not been allocated, this
     // field holds the initial array capacity, or zero signifying
     // DEFAULT_INITIAL_CAPACITY.)
+    // 这个是只hashMap总元素的阈值，如果给你了初始Capacity，那么就是2倍，否则就是16。这里你应该认为是总的数据的个数。
+    // 这个值的主要功能，是控制扩容, 也就是hashKey数组的扩容。扩容时capacity的两倍。
+    // loadFactor主要是在Key个数，HashMap总元素个数之间寻找一个平衡点。
     int threshold;
 
     /**
@@ -624,23 +627,27 @@ public class HashMap<K,V> extends AbstractMap<K,V>
     final V putVal(int hash, K key, V value, boolean onlyIfAbsent,
                    boolean evict) {
         Node<K,V>[] tab; Node<K,V> p; int n, i;
+        // || && 有求值顺序，因此这里可以这么写
+        // 很牛逼的写法，极简模式； 关于数组的length：是分配的内存的大小，而非数组真实元素的个数
         if ((tab = table) == null || (n = tab.length) == 0)
             n = (tab = resize()).length;
+
+        // tab.length, Node的大小，是总元素的个数吗？？ 还是hashKey数组的元素个数？
         if ((p = tab[i = (n - 1) & hash]) == null)
             tab[i] = newNode(hash, key, value, null);
         else {
             Node<K,V> e; K k;
             if (p.hash == hash &&
-                ((k = p.key) == key || (key != null && key.equals(k))))
+                ((k = p.key) == key || (key != null && key.equals(k)))) // 相同的元素进行覆盖上
                 e = p;
-            else if (p instanceof TreeNode)
+            else if (p instanceof TreeNode) // 如果碰撞链已经构建成了树结构
                 e = ((TreeNode<K,V>)p).putTreeVal(this, tab, hash, key, value);
             else {
-                for (int binCount = 0; ; ++binCount) {
-                    if ((e = p.next) == null) {
+                for (int binCount = 0; ; ++binCount) { // 遍历,链表的遍历，也就是碰撞后
+                    if ((e = p.next) == null) { // 如果hash到的节点没有后续节点，直接新增； 新增完后，还是判断是否要树形化
                         p.next = newNode(hash, key, value, null);
                         if (binCount >= TREEIFY_THRESHOLD - 1) // -1 for 1st
-                            treeifyBin(tab, hash);
+                            treeifyBin(tab, hash); //树形化
                         break;
                     }
                     if (e.hash == hash &&
@@ -673,10 +680,14 @@ public class HashMap<K,V> extends AbstractMap<K,V>
      *
      * @return the table
      */
+
+    /**
+     * resize是两倍当前元素的数量。 table.lenght << 1 ;
+     * */
     final Node<K,V>[] resize() {
         Node<K,V>[] oldTab = table;
         int oldCap = (oldTab == null) ? 0 : oldTab.length;
-        int oldThr = threshold;
+        int oldThr = threshold; // 如果指定了capacity，这里就是计算出来的值
         int newCap, newThr = 0;
         if (oldCap > 0) {
             if (oldCap >= MAXIMUM_CAPACITY) {
@@ -688,10 +699,10 @@ public class HashMap<K,V> extends AbstractMap<K,V>
                 newThr = oldThr << 1; // double threshold
         }
         else if (oldThr > 0) // initial capacity was placed in threshold
-            newCap = oldThr;
+            newCap = oldThr; // capacity等于Threshold，如果指定了
         else {               // zero initial threshold signifies using defaults
-            newCap = DEFAULT_INITIAL_CAPACITY;
-            newThr = (int)(DEFAULT_LOAD_FACTOR * DEFAULT_INITIAL_CAPACITY);
+            newCap = DEFAULT_INITIAL_CAPACITY;  // 容量
+            newThr = (int)(DEFAULT_LOAD_FACTOR * DEFAULT_INITIAL_CAPACITY); // 最大容量阈值
         }
         if (newThr == 0) {
             float ft = (float)newCap * loadFactor;
@@ -700,7 +711,7 @@ public class HashMap<K,V> extends AbstractMap<K,V>
         }
         threshold = newThr;
         @SuppressWarnings({"rawtypes","unchecked"})
-            Node<K,V>[] newTab = (Node<K,V>[])new Node[newCap];
+            Node<K,V>[] newTab = (Node<K,V>[])new Node[newCap]; //
         table = newTab;
         if (oldTab != null) {
             for (int j = 0; j < oldCap; ++j) {

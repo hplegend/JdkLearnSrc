@@ -34,17 +34,19 @@ import java.util.function.BiFunction;
 /**
  * This class implements a hash table, which maps keys to values. Any
  * non-<code>null</code> object can be used as a key or as a value. <p>
+ * HashTable的key和value必须要是非空。
  *
  * To successfully store and retrieve objects from a hashtable, the
  * objects used as keys must implement the <code>hashCode</code>
  * method and the <code>equals</code> method. <p>
+ * 对于用于hash的Key，必须要实现hashCode和equals方法（重写equal必须要实现hashCode）
  *
  * An instance of <code>Hashtable</code> has two parameters that affect its
  * performance: <i>initial capacity</i> and <i>load factor</i>.  The
- * <i>capacity</i> is the number of <i>buckets</i> in the hash table, and the
+ * <i>capacity</i> is the number of <i>buckets</i> in the hash table(容量就是桶？？每一个元素都是一个桶？？), and the
  * <i>initial capacity</i> is simply the capacity at the time the hash table
  * is created.  Note that the hash table is <i>open</i>: in the case of a "hash
- * collision", a single bucket stores multiple entries, which must be searched
+ * collision", a single bucket stores multiple entries（单桶能存很多元素）, which must be searched
  * sequentially.  The <i>load factor</i> is a measure of how full the hash
  * table is allowed to get before its capacity is automatically increased.
  * The initial capacity and load factor parameters are merely hints to
@@ -52,7 +54,7 @@ import java.util.function.BiFunction;
  * method is invoked are implementation-dependent.<p>
  *
  * Generally, the default load factor (.75) offers a good tradeoff between
- * time and space costs.  Higher values decrease the space overhead but
+ * time and space costs.  Higher values decrease the space overhead（overhead->n 开销） but
  * increase the time cost to look up an entry (which is reflected in most
  * <tt>Hashtable</tt> operations, including <tt>get</tt> and <tt>put</tt>).<p>
  *
@@ -60,13 +62,14 @@ import java.util.function.BiFunction;
  * need for <code>rehash</code> operations, which are time-consuming.
  * No <code>rehash</code> operations will <i>ever</i> occur if the initial
  * capacity is greater than the maximum number of entries the
- * <tt>Hashtable</tt> will contain divided by its load factor.  However,
+ * <tt>Hashtable</tt> will contain（英语上的倒装句式） divided by its load factor（初始容量小于可装载量，不会发生reHash）.  However,
  * setting the initial capacity too high can waste space.<p>
  *
  * If many entries are to be made into a <code>Hashtable</code>,
  * creating it with a sufficiently large capacity may allow the
  * entries to be inserted more efficiently than letting it perform
  * automatic rehashing as needed to grow the table. <p>
+ * 如果能预知到HashTable的容量，那么创建合适的HashTable大小比起自动扩容来说，更加的高效
  *
  * This example creates a hashtable of numbers. It uses the names of
  * the numbers as keys:
@@ -94,6 +97,13 @@ import java.util.function.BiFunction;
  * arbitrary, non-deterministic behavior at an undetermined time in the future.
  * The Enumerations returned by Hashtable's keys and elements methods are
  * <em>not</em> fail-fast.
+ *
+ * HashTable的迭代器有快速失败机制，原因是变量的过程中可能会导致HashTable的修改。
+ * 其实，任何的迭代器，只要不是ListIterator，通过迭代器修改是不可能实现的。迭代器只能实现遍历。
+ * 迭代器导致的快速失败，与是否线程同步没有任何关系吗？ 从hashTable上看，HashTable是线程同步的，但是依旧有快速失败的问题。可以去看看ConcurrentHashMap是否会发生fail-fast。
+ * 那么线程同步，与线程安全两个是同一个东西吗？ 线程同步用的是synchronized，但是线程安全并不是用synchronized标记。
+ * 从下方的注释可以看出，线程安全（thread-safe）就是HashTable的synchronized，只是ConcurrentHashMap实现线程安全不是用synchronized而已。
+ * 下方的注释也提到，如果要使用线程安全的高并发量的key-value数据结构，那么应该选择用ConcurrentHashMap。可以初步的猜测，ConcurrentHashMap用的是代码块级别的锁，RetrennLock或者Voliotile关键字
  *
  * <p>Note that the fail-fast behavior of an iterator cannot be guaranteed
  * as it is, generally speaking, impossible to make any hard guarantees in the
@@ -155,6 +165,16 @@ public class Hashtable<K,V>
      * @serial
      */
     private float loadFactor;
+
+
+    /**
+     * threadhold与loadFactor的关系是啥？ 两者各自的作用是啥？
+     *
+     * 1.系统提供了修改或者初始化的方法
+     * 2.threadhold=capacity*loadFactory 默认情况下。
+     * 3.loadFactory的作用自动扩容。
+     * 4.threadhold用于控制rehash（重新调整位置）
+     * */
 
     /**
      * The number of times this Hashtable has been structurally modified
@@ -375,6 +395,8 @@ public class Hashtable<K,V>
      * Some VMs reserve some header words in an array.
      * Attempts to allocate larger arrays may result in
      * OutOfMemoryError: Requested array size exceeds VM limit
+     *
+     * 最大数组元素个数
      */
     private static final int MAX_ARRAY_SIZE = Integer.MAX_VALUE - 8;
 
