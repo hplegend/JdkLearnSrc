@@ -1012,7 +1012,7 @@ public class ConcurrentHashMap<K,V> extends AbstractMap<K,V>
     }
 
     /** Implementation for put and putIfAbsent */
-    final V putVal(K key, V value, boolean onlyIfAbsent) {
+    final V putVal(K key, V value, boolean onlyIfAbsent) {  //ConcurrentHashMap得键值对都不为空，而HashMap得k和value都允许为空
         if (key == null || value == null) throw new NullPointerException();
         int hash = spread(key.hashCode());
         int binCount = 0;
@@ -1025,12 +1025,12 @@ public class ConcurrentHashMap<K,V> extends AbstractMap<K,V>
                              new Node<K,V>(hash, key, value, null)))
                     break;                   // no lock when adding to empty bin
             }
-            else if ((fh = f.hash) == MOVED)
+            else if ((fh = f.hash) == MOVED) // 什么意思？
                 tab = helpTransfer(tab, f);
             else {
                 V oldVal = null;
-                synchronized (f) {
-                    if (tabAt(tab, i) == f) {
+                synchronized (f) { // 这里锁得力度特别小，只锁k对应得那个bin（桶）
+                    if (tabAt(tab, i) == f) { // 这里再加判断的原因是双重锁机制吗？？有点像，支持高并发，就必须要考虑到任何的高并发情况。 基本上借鉴的高并发锁的思路实现的
                         if (fh >= 0) {
                             binCount = 1;
                             for (Node<K,V> e = f;; ++binCount) {
@@ -1044,14 +1044,14 @@ public class ConcurrentHashMap<K,V> extends AbstractMap<K,V>
                                     break;
                                 }
                                 Node<K,V> pred = e;
-                                if ((e = e.next) == null) {
+                                if ((e = e.next) == null) {  // 插入到链表的尾部
                                     pred.next = new Node<K,V>(hash, key,
                                                               value, null);
                                     break;
                                 }
                             }
                         }
-                        else if (f instanceof TreeBin) {
+                        else if (f instanceof TreeBin) { // 显然，如果是已经树性化了，那么肯定就需要按照树的结构插入
                             Node<K,V> p;
                             binCount = 2;
                             if ((p = ((TreeBin<K,V>)f).putTreeVal(hash, key,
@@ -2681,7 +2681,7 @@ public class ConcurrentHashMap<K,V> extends AbstractMap<K,V>
          * Returns the TreeNode (or null if not found) for the given key
          * starting at given root.
          */
-        final TreeNode<K,V> findTreeNode(int h, Object k, Class<?> kc) {
+        final TreeNode<K,V> findTreeNode(int h, Object k, Class<?> kc) {// 找K对应的位置
             if (k != null) {
                 TreeNode<K,V> p = this;
                 do  {
@@ -2874,17 +2874,17 @@ public class ConcurrentHashMap<K,V> extends AbstractMap<K,V>
         final TreeNode<K,V> putTreeVal(int h, K k, V v) {
             Class<?> kc = null;
             boolean searched = false;
-            for (TreeNode<K,V> p = root;;) {
-                int dir, ph; K pk;
-                if (p == null) {
+            for (TreeNode<K,V> p = root;;) {  // 循环开始遍历。p=root根节点。
+                int dir, ph; K pk;  // pk之前键的指针， dir 表示插入的方向左或者右，ph节点的hash值
+                if (p == null) {  // 如果树空（root节点空）,直接新建树节点。并作为root，因为是红黑树，默认根节点是黑色的
                     first = root = new TreeNode<K,V>(h, k, v, null, null);
                     break;
                 }
-                else if ((ph = p.hash) > h)
+                else if ((ph = p.hash) > h) // 判断当前节点的hash值与即将要插入节点hash值比较 （按照hash值比较）
                     dir = -1;
                 else if (ph < h)
                     dir = 1;
-                else if ((pk = p.key) == k || (pk != null && k.equals(pk)))
+                else if ((pk = p.key) == k || (pk != null && k.equals(pk))) // 比较值的大小
                     return p;
                 else if ((kc == null &&
                           (kc = comparableClassFor(k)) == null) ||
@@ -2898,11 +2898,11 @@ public class ConcurrentHashMap<K,V> extends AbstractMap<K,V>
                              (q = ch.findTreeNode(h, k, kc)) != null))
                             return q;
                     }
-                    dir = tieBreakOrder(k, pk);
+                    dir = tieBreakOrder(k, pk);  //计算方向
                 }
 
                 TreeNode<K,V> xp = p;
-                if ((p = (dir <= 0) ? p.left : p.right) == null) {
+                if ((p = (dir <= 0) ? p.left : p.right) == null) {  // 开始选择插入的节点
                     TreeNode<K,V> x, f = first;
                     first = x = new TreeNode<K,V>(h, k, v, f, xp);
                     if (f != null)
@@ -3073,7 +3073,7 @@ public class ConcurrentHashMap<K,V> extends AbstractMap<K,V>
             return root;
         }
 
-        static <K,V> TreeNode<K,V> balanceInsertion(TreeNode<K,V> root,
+        static <K,V> TreeNode<K,V> balanceInsertion(TreeNode<K,V> root,  // 红黑树的插入
                                                     TreeNode<K,V> x) {
             x.red = true;
             for (TreeNode<K,V> xp, xpp, xppl, xppr;;) {
