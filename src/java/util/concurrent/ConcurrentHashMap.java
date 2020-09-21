@@ -1029,7 +1029,7 @@ public class ConcurrentHashMap<K,V> extends AbstractMap<K,V>
                 tab = helpTransfer(tab, f);
             else {
                 V oldVal = null;
-                synchronized (f) { // 这里锁得力度特别小，只锁k对应得那个bin（桶）
+                synchronized (f) { // 这里锁得力度特别小，只锁k对应得那个bin（桶）；题外话，只会锁单个链表
                     if (tabAt(tab, i) == f) { // 这里再加判断的原因是双重锁机制吗？？有点像，支持高并发，就必须要考虑到任何的高并发情况。 基本上借鉴的高并发锁的思路实现的
                         if (fh >= 0) {
                             binCount = 1;
