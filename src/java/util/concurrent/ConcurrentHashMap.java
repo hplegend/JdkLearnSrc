@@ -2935,14 +2935,14 @@ public class ConcurrentHashMap<K,V> extends AbstractMap<K,V>
          * with a leaf successor that is pinned by "next" pointers
          * that are accessible independently of lock. So instead we
          * swap the tree linkages.
-         *
+         * 并没有删除中间节点，也没有交换，而是交换了tree的链接
          * @return true if now too small, so should be untreeified
          */
         final boolean removeTreeNode(TreeNode<K,V> p) {
             TreeNode<K,V> next = (TreeNode<K,V>)p.next;
             TreeNode<K,V> pred = p.prev;  // unlink traversal pointers
             TreeNode<K,V> r, rl;
-            if (pred == null)
+            if (pred == null) // 整个树就一个节点？？
                 first = next;
             else
                 pred.next = next;
@@ -2951,20 +2951,20 @@ public class ConcurrentHashMap<K,V> extends AbstractMap<K,V>
             if (first == null) {
                 root = null;
                 return true;
-            }
+            } // 感觉上面的代码就是删除节点
             if ((r = root) == null || r.right == null || // too small
                 (rl = r.left) == null || rl.left == null)
                 return true;
-            lockRoot();
+            lockRoot(); // 加锁
             try {
                 TreeNode<K,V> replacement;
                 TreeNode<K,V> pl = p.left;
                 TreeNode<K,V> pr = p.right;
                 if (pl != null && pr != null) {
                     TreeNode<K,V> s = pr, sl;
-                    while ((sl = s.left) != null) // find successor
+                    while ((sl = s.left) != null) // find successor  找后继节点，有孩子的最左孩子节点
                         s = sl;
-                    boolean c = s.red; s.red = p.red; p.red = c; // swap colors
+                    boolean c = s.red; s.red = p.red; p.red = c; // swap colors  交换颜色
                     TreeNode<K,V> sr = s.right;
                     TreeNode<K,V> pp = p.parent;
                     if (s == pr) { // p was s's direct parent
@@ -3073,17 +3073,26 @@ public class ConcurrentHashMap<K,V> extends AbstractMap<K,V>
             return root;
         }
 
-        static <K,V> TreeNode<K,V> balanceInsertion(TreeNode<K,V> root,  // 红黑树的插入
+        static <K,V> TreeNode<K,V> balanceInsertion(TreeNode<K,V> root,  // 红黑树的调整 x 意思是当前节点
                                                     TreeNode<K,V> x) {
             x.red = true;
-            for (TreeNode<K,V> xp, xpp, xppl, xppr;;) {
+            for (TreeNode<K,V> xp, xpp, xppl, xppr;;) { // xp: x的父节点，xpp：x的祖父节点，xppl: x节点的左叔叔， xppr：x节点的右叔叔
+                // case 01: 如果树为空，因为默认插入节点为红色，
+                // 而红黑树中的第一条性质即是：根节点为黑色。因此，这种情况下，处理插入平衡直接把节点颜色变成黑色即可
                 if ((xp = x.parent) == null) {
                     x.red = false;
                     return x;
                 }
+
+                // case 02: 父节点为黑色，可以自由插入； 父节点是根节点，也可以随意插入(这个判断可以取消掉)
                 else if (!xp.red || (xpp = xp.parent) == null)
                     return root;
+
+                // x节点的父节点是左孩子
+                // 进入到下面的逻辑，x节点的父节点肯定都是red
                 if (xp == (xppl = xpp.left)) {
+                    // case 03-main: x节点的xp（父节点）是红色，且x节点的父节点的叔叔也是红色
+                    // 处理策略：当前节点的父节点和叔叔节点涂黑，祖父节点涂红,把当前节点指向父节点。让后重新开始一轮旋转变色判断
                     if ((xppr = xpp.right) != null && xppr.red) {
                         xppr.red = false;
                         xp.red = false;
@@ -3091,11 +3100,15 @@ public class ConcurrentHashMap<K,V> extends AbstractMap<K,V>
                         x = xpp;
                     }
                     else {
+                        // case 04-main: 没有叔叔节点，或者叔叔节点是黑色，且当前节点是右孩子
+                        // 策略：把当前节点指向父节点，以父节点作为旋转枢纽，左旋转
                         if (x == xp.right) {
                             root = rotateLeft(root, x = xp);
-                            xpp = (xp = x.parent) == null ? null : xp.parent;
+                            xpp = (xp = x.parent) == null ? null : xp.parent; // 重新设置，因为这里还没有平衡，要继续执行变色和旋转
                         }
                         if (xp != null) {
+                            // case 05 -main: 父节点为红，父节点此时肯定是红色（从左旋得到，就是之前的x节点），节点是左孩子；
+                            // 策略： 父节点变色为黑； 如果祖父节点不为空，祖父节点变成红，同时以祖父节点右旋转（如果祖父为空，那么）
                             xp.red = false;
                             if (xpp != null) {
                                 xpp.red = true;
@@ -3104,7 +3117,9 @@ public class ConcurrentHashMap<K,V> extends AbstractMap<K,V>
                         }
                     }
                 }
+                // x节点的父节点是右孩子 （对称的旋转处理）
                 else {
+                    // case 03-main -equal: 父节点和叔叔节点为红
                     if (xppl != null && xppl.red) {
                         xppl.red = false;
                         xp.red = false;
@@ -3112,10 +3127,12 @@ public class ConcurrentHashMap<K,V> extends AbstractMap<K,V>
                         x = xpp;
                     }
                     else {
+                        // case 04-main -equal:
                         if (x == xp.left) {
                             root = rotateRight(root, x = xp);
                             xpp = (xp = x.parent) == null ? null : xp.parent;
                         }
+                        // case 05-main -equal:
                         if (xp != null) {
                             xp.red = false;
                             if (xpp != null) {
@@ -3128,6 +3145,13 @@ public class ConcurrentHashMap<K,V> extends AbstractMap<K,V>
             }
         }
 
+        /**
+         * 理解删除的核心:
+         * 删除修复操作是针对删除黑色节点才有的，当黑色节点被删除后会让整个树不符合RBTree的定义的第四条。需要做的处理是从兄弟节点上借调黑色的节点过来，如果兄弟节点没有黑节点可以借调的话，就只能往上追溯，将每一级的黑节点数减去一个，使得整棵树符合红黑树的定义。
+         * 删除操作的总体思想是从兄弟节点借调黑色节点使树保持局部的平衡，如果局部的平衡达到了，就看整体的树是否是平衡的，如果不平衡就接着向上追溯调整。
+         *
+         * x 是删除的位置，但是元素是新替换的元素
+         * */
         static <K,V> TreeNode<K,V> balanceDeletion(TreeNode<K,V> root,
                                                    TreeNode<K,V> x) {
             for (TreeNode<K,V> xp, xpl, xpr;;)  {
@@ -3137,27 +3161,36 @@ public class ConcurrentHashMap<K,V> extends AbstractMap<K,V>
                     x.red = false;
                     return x;
                 }
-                else if (x.red) {
+                else if (x.red) {   // 如果替换的节点是红色，直接染黑
                     x.red = false;
                     return root;
                 }
+                // 如果x替换的节点是黑色：
+                // 如果是左孩子
                 else if ((xpl = xp.left) == x) {
+                    // case 01- main: 兄弟节点不为空，且兄弟节点为红
+                    // 策略： 父节点染红，兄弟节点染黑，以父节点为支撑轴，左旋转
+                    // 兄弟无法借黑色，那么从子节点借。左旋就是这个意义
                     if ((xpr = xp.right) != null && xpr.red) {
                         xpr.red = false;
                         xp.red = true;
                         root = rotateLeft(root, xp);
                         xpr = (xp = x.parent) == null ? null : xp.right;
                     }
-                    if (xpr == null)
+                    if (xpr == null) // 把问题转嫁给了case 02-04。其实也可以认为是重新开始，
                         x = xp;
                     else {
+                        // case 02- main:  兄弟节点的左右节点
+                        // 策略：兄弟节点变成红，父节点成为当前节点，继续下一次判断
                         TreeNode<K,V> sl = xpr.left, sr = xpr.right;
                         if ((sr == null || !sr.red) &&
-                            (sl == null || !sl.red)) {
+                            (sl == null || !sl.red)) {  //右兄弟节点的孩子都不为空，且都是黑色，借调一个兄弟的黑色，因此把兄弟染红，同时继续向父节点调整
                             xpr.red = true;
                             x = xp;
                         }
                         else {
+                            // case 03- main（中间步骤） : 右兄弟节点的右孩子是黑色
+                            // 策略： 兄弟左孩子设置黑，兄弟右孩子设置成红，以右兄弟为支柱右旋转  （借调左红色，红变黑，继续上升）
                             if (sr == null || !sr.red) {
                                 if (sl != null)
                                     sl.red = false;
@@ -3166,6 +3199,8 @@ public class ConcurrentHashMap<K,V> extends AbstractMap<K,V>
                                 xpr = (xp = x.parent) == null ?
                                     null : xp.right;
                             }
+                            // case 04 - main： 兄弟节点的右孩子红 （这个判断基于之前的if，而非if else）
+                            // 策略： 兄弟节点成父节点颜色；父节点染黑色；子节点染黑；然后进行左旋 。 这里同时染色和旋转，实际上是借调两个黑色节点（父黑，兄弟右子黑）
                             if (xpr != null) {
                                 xpr.red = (xp == null) ? false : xp.red;
                                 if ((sr = xpr.right) != null)
@@ -3179,6 +3214,7 @@ public class ConcurrentHashMap<K,V> extends AbstractMap<K,V>
                         }
                     }
                 }
+                // 如果是是右孩子
                 else { // symmetric
                     if (xpl != null && xpl.red) {
                         xpl.red = false;
