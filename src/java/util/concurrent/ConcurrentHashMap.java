@@ -3027,9 +3027,9 @@ public class ConcurrentHashMap<K, V> extends AbstractMap<K, V>
                     else
                         pp.right = s;  // s 替换原来p的位置
                     if (sr != null)
-                        replacement = sr; // 记录开始调整的位置
+                        replacement = sr; // 如果sr不为空，也就s其实是一个父节点，那么他还有子右子树节点  记录开始调整的位置
                     else
-                        replacement = p;  // p其实是已经交换过位置的。 纵观全局，实际上就是交互了s和p的位置，重新调整了树结构。这里的交互是整个子结构的交互，而非仅仅是颜色和数值大小的交互。
+                        replacement = p;  // 这里的p其实就是s节点的位置，but很重要一点，仅仅是交换了颜色，并没有交换内容。 而是通过交互树的链接，来实现内容的交互。 p其实是已经交换过位置的。 最终，还是重替换的节点，开始调整，也就是要删除的节点
                 } else if (pl != null)
                     replacement = pl;
                 else if (pr != null)
@@ -3047,7 +3047,7 @@ public class ConcurrentHashMap<K, V> extends AbstractMap<K, V>
                     p.left = p.right = p.parent = null;
                 }
 
-                root = (p.red) ? r : balanceDeletion(r, replacement);
+                root = (p.red) ? r : balanceDeletion(r, replacement); // 如果删除的是红色（也就是替换的节点），那么不用做balance调整。 整个调整过程是从下往上直到根节点。因此，最终返回的都是根节点
 
                 if (p == replacement) {  // detach pointers
                     TreeNode<K, V> pp;
