@@ -862,7 +862,7 @@ public abstract class AbstractQueuedSynchronizer
                 final Node p = node.predecessor();
                 if (p == head && tryAcquire(arg)) {
                     setHead(node);
-                    p.next = null; // help GC
+                    p.next = null; // help GC 在后期的java中这样做的意义不大了
                     failed = false;
                     return interrupted;
                 }

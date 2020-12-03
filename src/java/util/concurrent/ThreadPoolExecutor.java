@@ -590,6 +590,10 @@ public class ThreadPoolExecutor extends AbstractExecutorService {
      * ps： 一个线程应该就是被包装成了一个worker。多个worker共享ThreadPoll里面的BlockQueue，里面的firstTask就是线程要执行的第一个任务。
      * 那这里的所谓的线程池该如何理解呢？ 其实就是把任务task放到queue，多个线程就是多个worker，每一个woker里面一个线程。
      * 每一个woker都是同步器，执行前都需要获得锁资源。
+     *
+     *
+     * AQS在这里做啥作用呢？ 看Worker重写的方法，视乎就是充当锁的作用，而且这个锁还是排他锁。
+     * 为什么会出现排队呢？本身不就是有任务队列了吗？任务还会积压到具体的执行线程？ ThreadPool的调度模型是怎样的？
      */
     private final class Worker
             extends AbstractQueuedSynchronizer
@@ -609,6 +613,7 @@ public class ThreadPoolExecutor extends AbstractExecutorService {
         volatile long completedTasks;
 
         /**
+         * ThreadPoolExecutor 提交的内容叫做task
          * Creates with given first task and thread from ThreadFactory.
          * @param firstTask the first task (null if none)
          */
@@ -621,7 +626,7 @@ public class ThreadPoolExecutor extends AbstractExecutorService {
         /** Delegates main run loop to outer runWorker  */
 
         // 线程worker的run方法
-        //
+        // runWoker是一个死循环，因此每一个worker启动run方法后，都会从队列里面拿，那么怎么会触发队列等待呢？
         public void run() {
             runWorker(this);
         }
@@ -637,20 +642,24 @@ public class ThreadPoolExecutor extends AbstractExecutorService {
 
         protected boolean tryAcquire(int unused) {
             if (compareAndSetState(0, 1)) {
+                // 设置当前现在占用锁。
                 setExclusiveOwnerThread(Thread.currentThread());
                 return true;
             }
             return false;
         }
 
+        // 这些都是实现的AQS
         protected boolean tryRelease(int unused) {
             setExclusiveOwnerThread(null);
             setState(0);
             return true;
         }
 
+        // AQS锁，利用队列排队。AQS的底层排队机制，由AQS的内部实现。如果获取失败，则加入排队中。获取锁成功，则线程不被中断，否则线程自行中断。
         public void lock()        { acquire(1); }
         public boolean tryLock()  { return tryAcquire(1); }
+        // unLock的时候，从AQS中唤醒一个节点
         public void unlock()      { release(1); }
         public boolean isLocked() { return isHeldExclusively(); }
 
