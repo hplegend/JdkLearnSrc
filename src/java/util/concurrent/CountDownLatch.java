@@ -153,6 +153,13 @@ import java.util.concurrent.locks.AbstractQueuedSynchronizer;
  * @since 1.5
  * @author Doug Lea
  */
+
+
+/**
+ * CountDownLatch
+ * 使用了AQS的优越共享锁特性，借助AQS的共享状态标记记录需要同步的线程数量，每结束一个线程，AQS共享标记减一。
+ * 这类似于记录共享锁的使用对象数量，来一个共享锁使用对象，加一，少一个减一。只是，这里初始化的时候，直接把需要同步的线程数作为共享锁使用的对象总数。
+ * */
 public class CountDownLatch {
     /**
      * Synchronization control For CountDownLatch.

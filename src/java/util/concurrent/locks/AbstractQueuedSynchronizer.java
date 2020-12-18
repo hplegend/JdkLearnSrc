@@ -529,6 +529,7 @@ public abstract class AbstractQueuedSynchronizer
 
     /**
      * The synchronization state.
+     * 共享锁共享的线程数
      */
     private volatile int state;
 
