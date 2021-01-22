@@ -236,6 +236,8 @@ class Thread implements Runnable {
         }
     }
 
+
+    // 线程优先级： 1-10，默认是5
     /**
      * The minimum priority that a thread can have.
      */

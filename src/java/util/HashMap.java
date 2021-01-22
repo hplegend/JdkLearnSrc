@@ -633,6 +633,8 @@ public class HashMap<K,V> extends AbstractMap<K,V>
             n = (tab = resize()).length;
 
         // tab.length, Node的大小，是总元素的个数吗？？ 还是hashKey数组的元素个数？
+        // 如果hash 槽没有值，新建一个node，放入到数组的槽
+        // 否则还是找下一个放置的位置
         if ((p = tab[i = (n - 1) & hash]) == null)
             tab[i] = newNode(hash, key, value, null);
         else {
