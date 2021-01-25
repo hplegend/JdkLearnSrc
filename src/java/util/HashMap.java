@@ -611,6 +611,7 @@ public class HashMap<K,V> extends AbstractMap<K,V>
      *         previously associated <tt>null</tt> with <tt>key</tt>.)
      */
     public V put(K key, V value) {
+        // 根据key计算hash值
         return putVal(hash(key), key, value, false, true);
     }
 
