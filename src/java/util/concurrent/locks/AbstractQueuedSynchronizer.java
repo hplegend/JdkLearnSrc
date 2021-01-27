@@ -290,6 +290,7 @@ public abstract class AbstractQueuedSynchronizer
     extends AbstractOwnableSynchronizer
     implements java.io.Serializable {
 
+    // 本身就是一个排队器，用来实现锁，因此为了高并发，这里的无锁操作就是多重的check，而非仅仅是一次check。
     private static final long serialVersionUID = 7373984972572414691L;
 
     /**
@@ -305,16 +306,17 @@ public abstract class AbstractQueuedSynchronizer
      * Hagersten) lock queue. CLH locks are normally used for
      * spinlocks.  We instead use them for blocking synchronizers, but
      * use the same basic tactic of holding some of the control
-     * information about a thread in the predecessor of its node.  A
+     * information about a thread in the predecessor（前驱节点）of its node.  A
      * "status" field in each node keeps track of whether a thread
-     * should block.  A node is signalled when its predecessor
-     * releases.  Each node of the queue otherwise serves as a
+     * should block （status用于标记一个等待线程是否阻塞？ 画外音，这里通常情况下都是自旋，在特殊情况下会Block）
+     *.  A node is signalled when its predecessor
+     * releases（这里有点类似于zk的锁，顺序节点，每一个节点监听它的前面一个节点的释放，那么这就是公平锁了吧？）.  Each node of the queue otherwise serves（副词修饰动词，放前面？） as a
      * specific-notification-style monitor holding a single waiting
      * thread. The status field does NOT control whether threads are
      * granted locks etc though.  A thread may try to acquire if it is
      * first in the queue. But being first does not guarantee success;
      * it only gives the right to contend.  So the currently released
-     * contender thread may need to rewait.
+     * contender thread may need to rewait. （意思，只有在等待队列的第一个获取获取锁，但是不一定获取成功。其实还是非公平锁）
      *
      * <p>To enqueue into a CLH lock, you atomically splice it in as new
      * tail. To dequeue, you just set the head field.
@@ -339,7 +341,7 @@ public abstract class AbstractQueuedSynchronizer
      * of spin locks, see the papers by Scott and Scherer at
      * http://www.cs.rochester.edu/u/scott/synchronization/
      *
-     * <p>We also use "next" links to implement blocking mechanics.
+     * <p>We also use "next" links to implement blocking mechanics. （next指针用于通知后继节点唤醒）
      * The thread id for each node is kept in its own node, so a
      * predecessor signals the next node to wake up by traversing
      * next link to determine which thread it is.  Determination of
@@ -348,7 +350,7 @@ public abstract class AbstractQueuedSynchronizer
      * when necessary by checking backwards from the atomically
      * updated "tail" when a node's successor appears to be null.
      * (Or, said differently, the next-links are an optimization
-     * so that we don't usually need a backward scan.)
+     * so that we don't usually need a backward scan.) （这里会特别注意锁这种情况的发生）
      *
      * <p>Cancellation introduces some conservatism to the basic
      * algorithms.  Since we must poll for cancellation of other
@@ -448,7 +450,7 @@ public abstract class AbstractQueuedSynchronizer
          * Link to the successor node that the current node/thread
          * unparks upon release. Assigned during enqueuing, adjusted
          * when bypassing cancelled predecessors, and nulled out (for
-         * sake of GC) when dequeued.  The enq operation does not
+         * sake of GC) when dequeued （设置成null，是因为GC。 怎么去思考这个问题呢？ 是回收局部变量？？ no no, 实际上是把局部变量于堆对象之间的连接断开，便于回收堆。。）.  The enq operation does not
          * assign next field of a predecessor until after attachment,
          * so seeing a null next field does not necessarily mean that
          * node is at end of queue. However, if a next field appears
@@ -529,7 +531,7 @@ public abstract class AbstractQueuedSynchronizer
 
     /**
      * The synchronization state.
-     * 共享锁共享的线程数
+     * 共享锁共享的线程数，这也是AQS的软锁的核心
      */
     private volatile int state;
 
